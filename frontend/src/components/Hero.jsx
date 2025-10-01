@@ -14,7 +14,7 @@ export default function Hero() {
         </p>
         <div className="flex justify-center space-x-4">
           <Link
-            to="/write"
+            to="/Write"
             className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition"
           >
             Start writing

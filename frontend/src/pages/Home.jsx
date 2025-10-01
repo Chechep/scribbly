@@ -1,13 +1,20 @@
-// src/pages/Home.jsx
+import { useState } from "react";
 import Hero from "../components/Hero";
 import PostCard from "../components/PostCard";
-import posts from "../data/posts"; 
+import initialPosts from "../data/posts";
 
-const Home = () => {
+const Home = ({ user }) => {
+  const [posts, setPosts] = useState(initialPosts);
+
+  // Function to add a new post dynamically
+  const addPost = (newPost) => {
+    setPosts((prev) => [newPost, ...prev]); // Add to beginning
+  };
+
   return (
     <div className="bg-rose-50 dark:bg-gray-900 min-h-screen transition-colors duration-500">
-      {/* Hero Section */}
-      <Hero />
+      {/* Hero Section only for non-logged-in users */}
+      {!user && <Hero onPublish={addPost} />}
 
       {/* Latest Posts Section */}
       <div className="container mx-auto px-6 py-12">
