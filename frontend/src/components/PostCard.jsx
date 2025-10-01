@@ -79,7 +79,7 @@ const PostCard = ({ post }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-darkBg p-6 rounded-lg shadow-md hover:shadow-xl transition text-gray-900 dark:text-darkText">
+    <div className="bg-white dark:bg-black p-6 rounded-lg shadow-md hover:shadow-xl transition text-gray-900 dark:text-darkText">
       {/* Image */}
       <img
         src={post.image}

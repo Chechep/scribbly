@@ -1,7 +1,7 @@
 import { FaInstagram, FaTwitter, FaFacebook, FaEnvelope } from "react-icons/fa";
 
 const Footer = () => (
-  <footer className="bg-gradient-to-l from-rose-100 to-rose-300 dark:from-gray-900 dark:to-gray-800 text-white p-8 transition-colors duration-500">
+  <footer className="bg-gradient-to-l from-rose-100 to-rose-300 dark:from-black dark:to-black text-white p-8 transition-colors duration-500">
     <div className="container mx-auto text-center space-y-4">
       {/* Social Icons */}
       <div className="flex justify-center gap-6 text-rose-500">
