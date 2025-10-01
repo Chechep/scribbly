@@ -1,25 +1,41 @@
-// src/components/DarkModeToggle.jsx
 import { useState, useEffect } from 'react';
 import { FaSun, FaMoon } from 'react-icons/fa';
 
 const DarkModeToggle = () => {
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('darkMode') === 'true';
-  });
+  const [darkMode, setDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false); // to wait for client-side render
 
+  // Only run on client
   useEffect(() => {
-    if (darkMode) {
+    const saved = localStorage.getItem('darkMode');
+    if (saved === 'true') {
+      setDarkMode(true);
       document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
     } else {
+      setDarkMode(false);
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
     }
-  }, [darkMode]);
+    setMounted(true);
+  }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      const newMode = !prev;
+      if (newMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      localStorage.setItem('darkMode', newMode ? 'true' : 'false');
+      return newMode;
+    });
+  };
+
+  if (!mounted) return null; // prevent flash of wrong mode
 
   return (
     <button
-      onClick={() => setDarkMode(!darkMode)}
+      onClick={toggleDarkMode}
       className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 transition"
     >
       {darkMode ? <FaSun /> : <FaMoon />}

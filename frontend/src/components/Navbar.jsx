@@ -50,7 +50,7 @@ export default function Navbar({ user }) {
     }
   };
 
-  // Handle Write button click
+  // Handle Write click
   const handleWriteClick = () => {
     if (user) {
       navigate("/write");
@@ -63,7 +63,7 @@ export default function Navbar({ user }) {
     <nav className="w-full sticky top-0 z-50 border-b border-white/20 dark:border-gray-700/30 bg-white/30 dark:bg-gray-900/30 backdrop-blur-md transition-colors duration-500">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          {/* Left Side */}
+          {/* Left */}
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-handwritten text-gray-700 dark:text-gray-100">
               scriblly
@@ -106,7 +106,7 @@ export default function Navbar({ user }) {
             )}
           </div>
 
-          {/* Right Side */}
+          {/* Right */}
           <div className="hidden md:flex items-center space-x-3">
             <button
               onClick={handleWriteClick}
@@ -152,7 +152,7 @@ export default function Navbar({ user }) {
             <DarkModeToggle />
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Button */}
           <div className="md:hidden">
             <button onClick={() => setOpen(!open)} className="mobile-menu-toggle text-gray-800 dark:text-gray-200 focus:outline-none">
               {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
