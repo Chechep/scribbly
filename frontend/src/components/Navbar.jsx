@@ -77,15 +77,21 @@ export default function Navbar() {
 
           {/* Right Side */}
           <div className="hidden md:flex items-center space-x-3">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg 
-              bg-gray-100/70 hover:bg-gray-200 dark:bg-gray-700/70 dark:hover:bg-gray-600 
-              text-gray-700 dark:text-gray-200">
+            <Link
+              to="/write"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg 
+                bg-gray-100/70 hover:bg-gray-200 dark:bg-gray-700/70 dark:hover:bg-gray-600 
+                text-gray-700 dark:text-gray-200"
+            >
               <Pencil className="w-4 h-4" />
               Write
-            </button>
-            <button className="px-4 py-2 rounded-lg bg-black/80 text-white hover:bg-black">
+            </Link>
+            <Link
+              to="/login"
+              className="px-4 py-2 rounded-lg bg-black/80 text-white hover:bg-black"
+            >
               Get Started
-            </button>
+            </Link>
             <DarkModeToggle />
           </div>
 
@@ -125,18 +131,48 @@ export default function Navbar() {
             />
           </div>
 
+          {/* Dropdown Results */}
+          {query && (
+            <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md 
+              border rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              {filteredPosts.length > 0 ? (
+                filteredPosts.map((p) => (
+                  <Link
+                    key={p.id}
+                    to={`/post/${p.id}`}
+                    className="block px-4 py-2 hover:bg-rose-100 dark:hover:bg-gray-700 
+                      text-gray-700 dark:text-gray-200"
+                    onClick={() => setQuery("")}
+                  >
+                    {p.title}
+                  </Link>
+                ))
+              ) : (
+                <p className="px-4 py-2 text-gray-500 dark:text-gray-400">
+                  No results found
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Write */}
-          <button className="flex items-center gap-2 w-full px-3 py-2 rounded-lg 
-            bg-gray-100/70 hover:bg-gray-200 dark:bg-gray-700/70 dark:hover:bg-gray-600 
-            text-gray-700 dark:text-gray-200">
+          <Link
+            to="/write"
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg 
+              bg-gray-100/70 hover:bg-gray-200 dark:bg-gray-700/70 dark:hover:bg-gray-600 
+              text-gray-700 dark:text-gray-200"
+          >
             <Pencil className="w-4 h-4" />
             Write
-          </button>
+          </Link>
 
           {/* Get Started */}
-          <button className="w-full px-4 py-2 rounded-lg bg-black/80 text-white hover:bg-black">
+          <Link
+            to="/login"
+            className="w-full px-4 py-2 rounded-lg bg-black/80 text-white hover:bg-black"
+          >
             Get Started
-          </button>
+          </Link>
 
           {/* Dark Mode */}
           <DarkModeToggle />
