@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function Hero() {
   return (
-    <section className="relative bg-gradient-to-l from-rose-100 to-rose-300 dark:from-gray-900 dark:to-gray-800 overflow-hidden">
+    <section className="relative bg-gradient-to-l from-rose-100 to-rose-300 dark:from-gray-800 dark:to-black overflow-hidden">
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
         <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
           Share your stories
