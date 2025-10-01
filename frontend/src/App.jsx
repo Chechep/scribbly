@@ -13,6 +13,7 @@ import PrivateRoute from './components/PrivateRoute';
 import { auth } from './firebase';
 import { Toaster } from 'react-hot-toast';
 import Stories from './pages/Stories';
+import News from './pages/News';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -36,6 +37,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/post/:id" element={<Post />} />
         <Route path="/stories" element={<Stories />} />
+        <Route path="/news" element={<News />} />
 
         {/* Write page only accessible to logged-in users */}
         <Route

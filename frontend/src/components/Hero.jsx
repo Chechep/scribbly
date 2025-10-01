@@ -23,7 +23,13 @@ export default function Hero() {
             to="/stories"
             className="px-6 py-3 border border-black text-black bg-transparent rounded-lg hover:bg-black hover:text-white transition dark:border-gray-300 dark:text-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"
           >
-            See stories
+            Posts
+          </Link>
+          <Link
+            to="/News"
+            className="px-6 py-3 border border-black text-black bg-transparent rounded-lg hover:bg-black hover:text-white transition dark:border-gray-300 dark:text-gray-100 dark:hover:bg-gray-800 dark:hover:text-white"
+          >
+            News
           </Link>
         </div>
       </div>
