@@ -1,6 +1,6 @@
 // src/pages/Write.jsx
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { auth } from "../firebase";
 import toast from "react-hot-toast";
 import { 
@@ -11,70 +11,24 @@ import {
   ArrowLeft, 
   ArrowRight, 
   Upload,
-  Edit3
+  Edit3,
+  Save,
+  Send
 } from "lucide-react";
-
-// Posts utility functions
-const savePost = (postData) => {
-  try {
-    const posts = getPosts();
-    const newPost = {
-      ...postData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    
-    const updatedPosts = [newPost, ...posts];
-    localStorage.setItem('blogPosts', JSON.stringify(updatedPosts));
-    return newPost.id;
-  } catch (error) {
-    throw new Error('Failed to save post');
-  }
-};
-
-const getPosts = () => {
-  try {
-    const posts = localStorage.getItem('blogPosts');
-    return posts ? JSON.parse(posts) : [];
-  } catch (error) {
-    return [];
-  }
-};
-
-const updatePost = (postId, updatedData) => {
-  try {
-    const posts = getPosts();
-    const updatedPosts = posts.map(post => 
-      post.id === postId 
-        ? { ...post, ...updatedData, updatedAt: new Date().toISOString() }
-        : post
-    );
-    localStorage.setItem('blogPosts', JSON.stringify(updatedPosts));
-    return true;
-  } catch (error) {
-    throw new Error('Failed to update post');
-  }
-};
-
-// Convert File object to base64 for storage
-const fileToBase64 = (file) => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = error => reject(error);
-  });
-};
+import { savePost, saveDraft, updateDraft, updatePost, fileToBase64 } from "../utils/posts";
 
 export default function Write({ user }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [images, setImages] = useState([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingPostId, setEditingPostId] = useState(null);
+  const [editMode, setEditMode] = useState('');
 
   const steps = [
     { id: 1, name: "Title" },
@@ -84,22 +38,26 @@ export default function Write({ user }) {
   ];
 
   useEffect(() => {
-    // Check if we're editing an existing post
+    // Check if we're editing an existing post or draft
     const editingPost = localStorage.getItem('editingPost');
-    if (editingPost) {
+    const isEditParam = searchParams.get('edit');
+    
+    if (editingPost || isEditParam) {
       const post = JSON.parse(editingPost);
-      setTitle(post.title);
-      setContent(post.content);
+      setTitle(post.title || "");
+      setContent(post.content || "");
       setImages(post.images?.map((img, index) => ({
         id: `img-${index}-${Date.now()}`,
         url: img,
-        file: null // We can't reconstruct File object from base64
+        file: null
       })) || []);
       setEditingPostId(post.id);
       setIsEditing(true);
+      setEditMode(post.status || 'draft');
       
-      // Clear editing state from localStorage
-      localStorage.removeItem('editingPost');
+      if (editingPost) {
+        localStorage.removeItem('editingPost');
+      }
     }
 
     // Check authentication
@@ -111,7 +69,7 @@ export default function Write({ user }) {
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, [navigate, searchParams]);
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
@@ -127,7 +85,7 @@ export default function Write({ user }) {
         return;
       }
 
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         toast.error("Image size should be less than 5MB");
         return;
       }
@@ -146,7 +104,6 @@ export default function Write({ user }) {
       reader.readAsDataURL(file);
     });
 
-    // Reset file input
     e.target.value = '';
   };
 
@@ -170,6 +127,55 @@ export default function Write({ user }) {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  const handleSaveDraft = async () => {
+    if (!title && !content) {
+      toast.error("Please add some content before saving as draft");
+      return;
+    }
+
+    setIsSavingDraft(true);
+    
+    try {
+      const imageBase64s = [];
+      for (const image of images) {
+        if (image.file) {
+          const base64 = await fileToBase64(image.file);
+          imageBase64s.push(base64);
+        } else {
+          imageBase64s.push(image.url);
+        }
+      }
+
+      const draftData = {
+        title: title.trim(),
+        content: content.trim(),
+        images: imageBase64s,
+        authorId: user.uid,
+        authorName: user.displayName || "Anonymous",
+        authorEmail: user.email,
+      };
+
+      if (isEditing && editingPostId) {
+        if (editMode === 'draft') {
+          await updateDraft(editingPostId, draftData);
+        } else {
+          await updatePost(editingPostId, draftData);
+        }
+        toast.success("Draft updated successfully!");
+      } else {
+        await saveDraft(draftData);
+        toast.success("Draft saved successfully!");
+      }
+
+      navigate("/profile");
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      toast.error("Failed to save draft");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
   const handlePublish = async () => {
     if (!title || !content) {
       toast.error("Please complete all required fields");
@@ -185,19 +191,16 @@ export default function Write({ user }) {
     setIsPublishing(true);
     
     try {
-      // Convert images to base64 for storage
       const imageBase64s = [];
       for (const image of images) {
         if (image.file) {
           const base64 = await fileToBase64(image.file);
           imageBase64s.push(base64);
         } else {
-          // If it's already a base64 string (from editing)
           imageBase64s.push(image.url);
         }
       }
 
-      // Create post data
       const postData = {
         title: title.trim(),
         content: content.trim(),
@@ -211,19 +214,21 @@ export default function Write({ user }) {
       };
 
       if (isEditing && editingPostId) {
-        // Update existing post
-        await updatePost(editingPostId, postData);
+        if (editMode === 'draft') {
+          // Convert draft to published post
+          await savePost(postData);
+          await deleteDraft(editingPostId);
+        } else {
+          await updatePost(editingPostId, postData);
+        }
         toast.success(`"${title}" updated successfully!`);
       } else {
-        // Create new post
         await savePost(postData);
         toast.success(`"${title}" published successfully!`);
       }
       
-      // Reset form
       resetForm();
       
-      // Redirect to profile after a short delay
       setTimeout(() => {
         navigate("/profile");
       }, 1500);
@@ -243,6 +248,7 @@ export default function Write({ user }) {
     setCurrentStep(1);
     setIsEditing(false);
     setEditingPostId(null);
+    setEditMode('');
   };
 
   const handleCancel = () => {
@@ -310,7 +316,6 @@ export default function Write({ user }) {
                 Add Images (Optional)
               </label>
               
-              {/* Image Grid */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 {images.map((image) => (
                   <div key={image.id} className="relative group">
@@ -346,7 +351,6 @@ export default function Write({ user }) {
                 )}
               </div>
 
-              {/* Upload Button for mobile */}
               {images.length < 4 && (
                 <div className="md:hidden">
                   <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:border-rose-500 transition-colors duration-200">
@@ -386,7 +390,7 @@ export default function Write({ user }) {
           <div className="space-y-6">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
               <h3 className="font-semibold text-xl mb-3 text-gray-900 dark:text-gray-100">
-                {title}
+                {title || "Untitled"}
               </h3>
               <div className="prose dark:prose-invert max-w-none">
                 <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
@@ -468,7 +472,7 @@ export default function Write({ user }) {
                 <div className="flex items-center space-x-2 px-3 py-1 bg-amber-100 dark:bg-amber-900/30 rounded-full">
                   <Edit3 size={16} className="text-amber-600 dark:text-amber-400" />
                   <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                    Editing
+                    {editMode === 'draft' ? 'Editing Draft' : 'Editing Post'}
                   </span>
                 </div>
               )}
@@ -530,33 +534,44 @@ export default function Write({ user }) {
                 Previous
               </button>
 
-              {currentStep < steps.length ? (
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={nextStep}
-                  className="flex items-center px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40"
+                  onClick={handleSaveDraft}
+                  disabled={isSavingDraft}
+                  className="flex items-center px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                 >
-                  Next Step
-                  <ArrowRight size={18} className="ml-2" />
+                  <Save size={18} className="mr-2" />
+                  {isSavingDraft ? "Saving..." : "Save Draft"}
                 </button>
-              ) : (
-                <button
-                  onClick={handlePublish}
-                  disabled={isPublishing}
-                  className="flex items-center px-8 py-3 bg-green-500 hover:bg-green-600 disabled:bg-green-400 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 disabled:cursor-not-allowed"
-                >
-                  {isPublishing ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                      {isEditing ? "Updating..." : "Publishing..."}
-                    </>
-                  ) : (
-                    <>
-                      {isEditing ? "Update Story" : "Publish Story"}
-                      <Upload size={18} className="ml-2" />
-                    </>
-                  )}
-                </button>
-              )}
+
+                {currentStep < steps.length ? (
+                  <button
+                    onClick={nextStep}
+                    className="flex items-center px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40"
+                  >
+                    Next Step
+                    <ArrowRight size={18} className="ml-2" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                    className="flex items-center px-8 py-3 bg-green-500 hover:bg-green-600 disabled:bg-green-400 text-white rounded-lg font-semibold transition-all duration-200 shadow-lg shadow-green-500/25 hover:shadow-green-500/40 disabled:cursor-not-allowed"
+                  >
+                    {isPublishing ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        {isEditing ? "Updating..." : "Publishing..."}
+                      </>
+                    ) : (
+                      <>
+                        {isEditing ? "Update Story" : "Publish Story"}
+                        <Send size={18} className="ml-2" />
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
