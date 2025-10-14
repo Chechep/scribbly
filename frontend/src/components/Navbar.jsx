@@ -111,8 +111,6 @@ export default function Navbar({ user }) {
                 {profileOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-900/80 backdrop-blur-md border rounded-lg shadow-lg z-50 py-2">
                     <Link to="/profile" className="block px-4 py-2 hover:bg-rose-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">Profile</Link>
-                    <Link to="/profile#blogs" className="block px-4 py-2 hover:bg-rose-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">My Blogs</Link>
-                    <Link to="/profile#drafts" className="block px-4 py-2 hover:bg-rose-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">Drafts</Link>
                     <button onClick={handleLogout} className="w-full text-left px-4 py-2 hover:bg-rose-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200">Logout</button>
                   </div>
                 )}
